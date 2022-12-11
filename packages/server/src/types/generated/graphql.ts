@@ -19,11 +19,19 @@ export type Scalars = {
 export type Mutation = {
   __typename?: 'Mutation';
   addTodo?: Maybe<Todo>;
+  updateTodo?: Maybe<Todo>;
 };
 
 
 export type MutationAddTodoArgs = {
   text: Scalars['String'];
+};
+
+
+export type MutationUpdateTodoArgs = {
+  id: Scalars['String'];
+  status?: InputMaybe<Scalars['TodoStatus']>;
+  text?: InputMaybe<Scalars['String']>;
 };
 
 export type Query = {
@@ -141,6 +149,7 @@ export interface DateTimeScalarConfig extends GraphQLScalarTypeConfig<ResolversT
 
 export type MutationResolvers<ContextType = any, ParentType extends ResolversParentTypes['Mutation'] = ResolversParentTypes['Mutation']> = ResolversObject<{
   addTodo?: Resolver<Maybe<ResolversTypes['Todo']>, ParentType, ContextType, RequireFields<MutationAddTodoArgs, 'text'>>;
+  updateTodo?: Resolver<Maybe<ResolversTypes['Todo']>, ParentType, ContextType, RequireFields<MutationUpdateTodoArgs, 'id'>>;
 }>;
 
 export type QueryResolvers<ContextType = any, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = ResolversObject<{

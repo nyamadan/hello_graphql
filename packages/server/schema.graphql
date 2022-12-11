@@ -8,6 +8,7 @@ type Query {
 
 type Mutation {
   addTodo(text: String!): Todo
+  updateTodo(id: String!, text: String, status: TodoStatus): Todo
 }
 
 type Todo {
