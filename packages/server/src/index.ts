@@ -3,76 +3,73 @@ import { startStandaloneServer } from "@apollo/server/standalone";
 import { GraphQLFileLoader } from "@graphql-tools/graphql-file-loader";
 import { loadSchemaSync } from "@graphql-tools/load";
 import { addResolversToSchema } from "@graphql-tools/schema";
-import { Prisma, PrismaClient, User } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 import path from "path";
 import { ulid } from "ulid";
 import {
   MutationResolvers,
   QueryResolvers,
   Resolvers,
+  Todo,
 } from "./types/generated/graphql";
 const prisma = new PrismaClient();
 
-const addUser: MutationResolvers["addUser"] = async (_, { name }) => {
-  const data: Prisma.UserUncheckedCreateInput = {
+const addTodo: MutationResolvers["addTodo"] = async (_, { text }) => {
+  const data: Prisma.TodoUncheckedCreateInput = {
     id: ulid(),
-    name,
-  };
-
-  return await prisma.user.create({ data });
-};
-
-const addPost: MutationResolvers["addPost"] = async (_, { text, userId }) => {
-  const data: Prisma.PostUncheckedCreateInput = {
-    id: ulid(),
-    userId,
     text,
   };
 
-  return await prisma.post.create({ data });
+  const todo = await prisma.todo.create({ data });
+  return {
+    ...todo,
+    status: todo.status as Todo["status"],
+    createdAt: todo.createdAt.toISOString(),
+  };
 };
 
-const getUser: QueryResolvers["getUser"] = async (...args) => {
+const getTodo: QueryResolvers["getTodo"] = async (...args) => {
   const [_, { id }] = args;
 
-  const result = await prisma.user.findUnique({
+  const todo = await prisma.todo.findUnique({
     where: {
       id,
     },
-    include: {
-      posts: {
-        orderBy: { createdAt: "desc" },
-        take: 5,
-      },
-    },
   });
 
-  return result;
+  if (todo == null) {
+    return null;
+  }
+
+  return {
+    ...todo,
+    status: todo.status as Todo["status"],
+    createdAt: todo.createdAt.toISOString(),
+  };
 };
 
-const getPost: QueryResolvers["getPost"] = async (...args) => {
-  const [_, { id }] = args;
-
-  const result = await prisma.post.findUnique({
-    where: {
-      id,
+const getTodoList: QueryResolvers["getTodoList"] = async () => {
+  const result = await prisma.todo.findMany({
+    orderBy: {
+      createdAt: "desc",
     },
-    include: {
-      user: true,
-    },
+    take: 10,
   });
 
-  return result;
+  return result.map<Todo>((todo) => ({
+    ...todo,
+    status: todo.status as Todo["status"],
+    createdAt: todo.createdAt.toISOString(),
+  }));
 };
 
 const resolvers: Resolvers = {
   Query: {
-    getUser,
-    getPost,
+    getTodo,
+    getTodoList,
   },
   Mutation: {
-    addUser,
-    addPost,
+    addTodo,
   },
 };
 
